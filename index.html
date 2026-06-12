@@ -1,0 +1,100 @@
+# ✦ Elysee Home Store — Setup Guide
+## School Project: E-Commerce with PHP + MySQL + XAMPP
+
+---
+
+## 📁 Project Structure
+```
+elysee/
+├── index.html          ← Main website (all pages in one)
+├── database.sql        ← Run this first in phpMyAdmin
+├── css/
+│   └── style.css       ← All styles
+├── js/
+│   └── main.js         ← Frontend logic
+└── php/
+    ├── config.php      ← Database connection (PDO)
+    ├── auth.php        ← Login / Register / Logout
+    ├── products.php    ← CRUD: list, add, update, delete
+    └── cart.php        ← Shopping cart operations
+```
+
+---
+
+## 🚀 Setup Steps
+
+### 1. Start XAMPP
+Open XAMPP Control Panel and start:
+- **Apache** (web server)
+- **MySQL** (database)
+
+### 2. Copy Project Files
+Copy the entire `elysee/` folder to:
+```
+C:\xampp\htdocs\elysee\
+```
+
+### 3. Create the Database
+1. Open your browser → go to `http://localhost/phpmyadmin`
+2. Click **"New"** in the left sidebar
+3. Create a database named `elysee_db`
+4. Click **"Import"** tab → choose `elysee/database.sql` → click **"Go"**
+
+### 4. Open the Site
+Go to: `http://localhost/elysee/`
+
+---
+
+## 🔐 Features Implemented
+
+| Feature | How |
+|---|---|
+| User Registration | `php/auth.php` → `password_hash()` with bcrypt cost 12 |
+| User Login | `php/auth.php` → `password_verify()` + PHP sessions |
+| Logout | Session destroy |
+| Form Validation | Frontend (JS) + Backend (PHP) double validation |
+| Password Strength | Visual indicator on register form |
+| Product Catalog | `php/products.php` → reads from MySQL |
+| Category Filter | SQL WHERE clause on category slug |
+| Search | SQL LIKE query on name + description |
+| Sort | Dynamic ORDER BY |
+| Add Product | Admin panel → INSERT into products |
+| Edit Product | Admin panel → UPDATE products |
+| Delete Product | Admin panel → DELETE from products |
+| Shopping Cart | `php/cart.php` → CRUD on cart table |
+| Cart Count | Live update in navbar |
+| Responsive Design | CSS Grid + media queries |
+
+---
+
+## 🗃️ Database Schema
+
+- **users** — id, full_name, email, password (hashed), created_at
+- **categories** — id, name, slug, icon
+- **products** — id, category_id, name, description, price, image_url, badge, stock
+- **cart** — id, user_id, product_id, quantity
+- **orders** — id, user_id, total, status
+
+---
+
+## 🔒 Security Notes
+
+- Passwords stored with **bcrypt** (PHP `PASSWORD_BCRYPT`, cost 12)
+- All database queries use **PDO prepared statements** (SQL injection safe)
+- User input is HTML-escaped in JS with `escHtml()` (XSS safe)
+- Sessions used for authentication state
+
+---
+
+## 💡 Default XAMPP Credentials
+```
+DB Host:     localhost
+DB User:     root
+DB Password: (empty)
+DB Name:     elysee_db
+```
+If you changed your MySQL password, edit `php/config.php`.
+
+---
+
+*Elysee Home Store — School Project 2025*

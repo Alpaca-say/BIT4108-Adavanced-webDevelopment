@@ -1,0 +1,106 @@
+<?php
+// php/auth.php - Handles login, register, logout, session check
+require_once 'config.php';
+
+$action = $_POST['action'] ?? $_GET['action'] ?? '';
+
+switch ($action) {
+    case 'register':
+        handleRegister();
+        break;
+    case 'login':
+        handleLogin();
+        break;
+    case 'logout':
+        handleLogout();
+        break;
+    case 'check':
+        handleCheck();
+        break;
+    default:
+        jsonResponse(['success' => false, 'message' => 'Invalid action.'], 400);
+}
+
+function handleRegister() {
+    global $pdo;
+
+    $full_name = trim($_POST['full_name'] ?? '');
+    $email     = trim($_POST['email'] ?? '');
+    $password  = $_POST['password'] ?? '';
+
+    // Validation
+    if (empty($full_name) || empty($email) || empty($password)) {
+        jsonResponse(['success' => false, 'message' => 'All fields are required.']);
+    }
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        jsonResponse(['success' => false, 'message' => 'Invalid email address.']);
+    }
+    if (strlen($password) < 8) {
+        jsonResponse(['success' => false, 'message' => 'Password must be at least 8 characters.']);
+    }
+    if (strlen($full_name) < 2) {
+        jsonResponse(['success' => false, 'message' => 'Please enter your full name.']);
+    }
+
+    // Check if email exists
+    $stmt = $pdo->prepare('SELECT id FROM users WHERE email = ?');
+    $stmt->execute([$email]);
+    if ($stmt->fetch()) {
+        jsonResponse(['success' => false, 'message' => 'An account with this email already exists.']);
+    }
+
+    // Hash password and insert
+    $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+    $stmt = $pdo->prepare('INSERT INTO users (full_name, email, password) VALUES (?, ?, ?)');
+    $stmt->execute([$full_name, $email, $hash]);
+
+    $userId = $pdo->lastInsertId();
+    $_SESSION['user_id']   = $userId;
+    $_SESSION['user_name'] = $full_name;
+    $_SESSION['user_email']= $email;
+
+    jsonResponse(['success' => true, 'message' => 'Account created!', 'name' => $full_name]);
+}
+
+function handleLogin() {
+    global $pdo;
+
+    $email    = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+
+    if (empty($email) || empty($password)) {
+        jsonResponse(['success' => false, 'message' => 'Email and password are required.']);
+    }
+
+    $stmt = $pdo->prepare('SELECT id, full_name, password FROM users WHERE email = ?');
+    $stmt->execute([$email]);
+    $user = $stmt->fetch();
+
+    if (!$user || !password_verify($password, $user['password'])) {
+        jsonResponse(['success' => false, 'message' => 'Invalid email or password.']);
+    }
+
+    $_SESSION['user_id']   = $user['id'];
+    $_SESSION['user_name'] = $user['full_name'];
+    $_SESSION['user_email']= $email;
+
+    jsonResponse(['success' => true, 'message' => 'Welcome back!', 'name' => $user['full_name']]);
+}
+
+function handleLogout() {
+    session_destroy();
+    jsonResponse(['success' => true, 'message' => 'Logged out.']);
+}
+
+function handleCheck() {
+    if (isset($_SESSION['user_id'])) {
+        jsonResponse([
+            'logged_in' => true,
+            'name'      => $_SESSION['user_name'],
+            'email'     => $_SESSION['user_email']
+        ]);
+    } else {
+        jsonResponse(['logged_in' => false]);
+    }
+}
+?>
